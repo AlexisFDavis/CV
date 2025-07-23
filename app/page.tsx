@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Download, Star, Code, Briefcase, User, Mail, Phone, MapPin } from 'lucide-react'
+import { Download, Star, Code, Briefcase, User, Mail, Phone, MapPin, SquareChartGantt } from 'lucide-react'
 
 interface Language {
   hero: {
@@ -242,15 +242,7 @@ export default function Home() {
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
-  /*document.addEventListener('keydown', function(event) {
-  if (event.key === 'ArrowDown') {
-    event.preventDefault(); 
 
-      const destino = document.getElementById('contact');
-      destino.scrollIntoView({ behavior: 'smooth' });
-    }
-  });
-  */
   const toggleLanguage = () => {
     setCurrentLanguage(prev => prev === 'es' ? 'en' : 'es')
   }
@@ -271,6 +263,177 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.8; }
+        }
+        
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes geometric-float {
+          0%, 100% { 
+            transform: translate(0px, 0px) rotate(0deg); 
+          }
+          25% { 
+            transform: translate(15px, -10px) rotate(90deg); 
+          }
+          50% { 
+            transform: translate(-8px, -20px) rotate(180deg); 
+          }
+          75% { 
+            transform: translate(-15px, 5px) rotate(270deg); 
+          }
+        }
+        
+        @keyframes drift-horizontal {
+          0%, 100% { transform: translateX(0px); }
+          50% { transform: translateX(40px); }
+        }
+        
+        @keyframes drift-vertical {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(30px); }
+        }
+        
+        @keyframes orbit {
+          0% { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+          100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+        }
+        
+        @keyframes triangle-spin {
+          0% { transform: rotate(0deg) scale(1); }
+          50% { transform: rotate(180deg) scale(1.2); }
+          100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        @keyframes hexagon-pulse {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          50% { transform: scale(1.3) rotate(60deg); }
+        }
+        
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        .animate-float-delayed {
+          animation: float-delayed 8s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+        
+        .animate-spin-slow {
+          animation: spin-slow 20s linear infinite;
+        }
+        
+        .animate-twinkle {
+          animation: twinkle 3s ease-in-out infinite;
+        }
+        
+        .animate-fade-in-up {
+          animation: fade-in-up 1s ease-out forwards;
+        }
+        
+        .animate-fade-in-up-delay {
+          animation: fade-in-up 1s ease-out 0.3s forwards;
+          opacity: 0;
+        }
+        
+        .animate-fade-in-up-delay-2 {
+          animation: fade-in-up 1s ease-out 0.6s forwards;
+          opacity: 0;
+        }
+        
+        .animate-gradient-shift {
+          animation: gradient-shift 3s ease infinite;
+          background-size: 200% 200%;
+        }
+        
+        .animate-geometric-float {
+          animation: geometric-float 12s ease-in-out infinite;
+        }
+        
+        .animate-drift-horizontal {
+          animation: drift-horizontal 16s ease-in-out infinite;
+        }
+        
+        .animate-drift-vertical {
+          animation: drift-vertical 14s ease-in-out infinite;
+        }
+        
+        .animate-orbit {
+          animation: orbit 20s linear infinite;
+        }
+        
+        .animate-triangle-spin {
+          animation: triangle-spin 18s ease-in-out infinite;
+        }
+        
+        .animate-hexagon-pulse {
+          animation: hexagon-pulse 10s ease-in-out infinite;
+        }
+        
+        .glass-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 1rem;
+        }
+        
+        .glass-card-enhanced {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 1.5rem;
+          box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-card-hero {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(25px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 2rem;
+          box-shadow: 0 50px 80px rgba(0, 0, 0, 0.2);
+        }
+      `}</style>
+
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-950 to-pink-950"></div>
         
@@ -302,6 +465,128 @@ export default function Home() {
           
           <div className="absolute top-1/4 right-1/4 w-32 h-32 border border-white/5 rotate-45 animate-spin-slow"></div>
           <div className="absolute bottom-1/3 left-1/3 w-24 h-24 border border-purple-400/10 rotate-12 animate-pulse"></div>
+          
+          <div 
+            className="absolute top-[15%] left-[70%] w-0 h-0 animate-triangle-spin"
+            style={{ 
+              borderLeft: '12px solid transparent',
+              borderRight: '12px solid transparent', 
+              borderBottom: '20px solid rgba(59, 130, 246, 0.2)',
+              transform: `translate(${mousePosition.x * 0.008}px, ${mousePosition.y * 0.008}px)`,
+              animationDelay: '0s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[65%] left-[8%] w-0 h-0 animate-triangle-spin"
+            style={{ 
+              borderLeft: '15px solid transparent',
+              borderRight: '15px solid transparent', 
+              borderBottom: '26px solid rgba(236, 72, 153, 0.2)',
+              transform: `translate(${mousePosition.x * 0.006}px, ${mousePosition.y * 0.006}px)`,
+              animationDelay: '3s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[85%] right-[25%] w-0 h-0 animate-triangle-spin"
+            style={{ 
+              borderLeft: '10px solid transparent',
+              borderRight: '10px solid transparent', 
+              borderBottom: '17px solid rgba(34, 197, 94, 0.2)',
+              transform: `translate(${mousePosition.x * 0.007}px, ${mousePosition.y * 0.007}px)`,
+              animationDelay: '6s'
+            }}
+          ></div>
+          
+          <div 
+            className="absolute top-[35%] right-[5%] w-8 h-8 border-2 border-cyan-400/20 animate-hexagon-pulse"
+            style={{ 
+              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+              transform: `translate(${mousePosition.x * 0.012}px, ${mousePosition.y * 0.012}px)`,
+              animationDelay: '2s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[75%] left-[60%] w-12 h-12 border-2 border-violet-400/20 animate-hexagon-pulse"
+            style={{ 
+              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+              transform: `translate(${mousePosition.x * 0.009}px, ${mousePosition.y * 0.009}px)`,
+              animationDelay: '5s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[45%] left-[35%] w-6 h-6 border-2 border-orange-400/20 animate-hexagon-pulse"
+            style={{ 
+              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+              transform: `translate(${mousePosition.x * 0.011}px, ${mousePosition.y * 0.011}px)`,
+              animationDelay: '8s'
+            }}
+          ></div>
+          
+          <div 
+            className="absolute top-[20%] left-[45%] w-6 h-6 border border-rose-400/20 rotate-45 animate-geometric-float"
+            style={{ 
+              transform: `rotate(45deg) translate(${mousePosition.x * 0.010}px, ${mousePosition.y * 0.010}px)`,
+              animationDelay: '1s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[70%] right-[45%] w-8 h-8 border border-emerald-400/20 rotate-45 animate-geometric-float"
+            style={{ 
+              transform: `rotate(45deg) translate(${mousePosition.x * 0.008}px, ${mousePosition.y * 0.008}px)`,
+              animationDelay: '4s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[55%] left-[75%] w-10 h-10 border border-amber-400/20 rotate-45 animate-geometric-float"
+            style={{ 
+              transform: `rotate(45deg) translate(${mousePosition.x * 0.005}px, ${mousePosition.y * 0.005}px)`,
+              animationDelay: '7s'
+            }}
+          ></div>
+          
+          <div 
+            className="absolute top-[25%] left-[25%] w-16 h-16 border border-indigo-400/15 rounded-full animate-drift-horizontal"
+            style={{ 
+              transform: `translate(${mousePosition.x * 0.013}px, ${mousePosition.y * 0.013}px)`,
+              animationDelay: '2.5s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[80%] right-[60%] w-12 h-12 border border-teal-400/15 rounded-full animate-drift-vertical"
+            style={{ 
+              transform: `translate(${mousePosition.x * 0.015}px, ${mousePosition.y * 0.015}px)`,
+              animationDelay: '5.5s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[40%] right-[80%] w-14 h-14 border border-pink-400/15 rounded-full animate-orbit"
+            style={{ 
+              transform: `translate(${mousePosition.x * 0.007}px, ${mousePosition.y * 0.007}px)`,
+              animationDelay: '8.5s'
+            }}
+          ></div>
+          
+          <div 
+            className="absolute top-[60%] left-[50%] w-5 h-5 border border-lime-400/20 animate-drift-horizontal"
+            style={{ 
+              transform: `translate(${mousePosition.x * 0.014}px, ${mousePosition.y * 0.014}px)`,
+              animationDelay: '1.5s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[30%] right-[30%] w-7 h-7 border border-sky-400/20 animate-drift-vertical"
+            style={{ 
+              transform: `translate(${mousePosition.x * 0.009}px, ${mousePosition.y * 0.009}px)`,
+              animationDelay: '4.5s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-[85%] left-[40%] w-9 h-9 border border-fuchsia-400/20 animate-geometric-float"
+            style={{ 
+              transform: `translate(${mousePosition.x * 0.011}px, ${mousePosition.y * 0.011}px)`,
+              animationDelay: '7.5s'
+            }}
+          ></div>
           
           <div 
             className="absolute inset-0 opacity-30"
@@ -359,7 +644,7 @@ export default function Home() {
           visibleSections.includes('hero') ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-20 scale-95'
         }`}
       >
-        <div className="glass-card-hero text-center max-w-5xl mx-auto p-12 relative overflow-hidden">
+        <div className="glass-card-hero text-center max-w-4xlmx-auto p-12 relative ">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-blue-500/5 animate-gradient-shift"></div>
           <div className="relative z-10">
             <div className="mb-8 inline-block">
@@ -405,7 +690,7 @@ export default function Home() {
         }`}
       >
         <div className="max-w-4xl mx-auto">
-          <div className="glass-card-enhanced p-8 md:p-12 relative overflow-hidden group">
+          <div className="glass-card-enhanced p-8 md:p-12 relative  group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-8">
@@ -428,7 +713,7 @@ export default function Home() {
                 {t.about.downloadCV}
               </button>
               <button 
-                onClick={downloadCVHardvard} style={{ marginLeft: '3rem' }}
+                onClick={downloadCVHardvard} style={{ marginLeft: '2%' }}
                 className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-pink-500 transform hover:scale-105 hover:shadow-2xl transition-all duration-300 group"
               >
                 <Download className="w-5 h-5 group-hover:animate-bounce" />
@@ -536,10 +821,15 @@ export default function Home() {
           visibleSections.includes('skills') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}
       >
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-white text-center mb-12">
-            {t.skills.title}
-          </h2>
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-4 mb-12">
+              <div className="p-3 bg-gradient-to-r from-red-500/20 to-pink-400/20 rounded-xl">
+                <SquareChartGantt className="w-8 h-8 text-violet-300" />
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-white">
+                {t.skills.title}
+              </h2>
+            </div>
           <div className="grid md:grid-cols-3 gap-8">
             {t.skills.categories.map((category, index) => (
               <div 
@@ -569,12 +859,12 @@ export default function Home() {
       <section 
         id="contact" 
         data-section 
-        className={`py-20 px-6 transition-all duration-1000 transform ${
+        className={`py-20 px-6 transition-all duration-1000 transform relative z-10 ${
           visibleSections.includes('contact') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <div className="glass-card-enhanced p-8 md:p-12 relative overflow-hidden group">
+          <div className="glass-card-enhanced p-8 md:p-12 relative group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="relative z-10">
               <div className="inline-flex items-center gap-4 mb-8">
@@ -616,16 +906,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <footer className="py-8 text-center">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="glass-card p-6">
-            <p className="text-gray-400">
-              © 2025 Alexis Davis. {currentLanguage === 'es' ? 'Todos los derechos reservados.' : 'All rights reserved.'}
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
