@@ -67,7 +67,7 @@ const translations: { [key: string]: Language } = {
       name: "Alexis Davis",
       title: "Desarrollador de Software",
       description: "Desarrollador Full Stack apasionado por crear soluciones innovadoras",
-      technologies: "C# • PostgreSQL • Angular • Next.js • AWS • Java • Go",
+      technologies: "C# • PostgreSQL • Angular • Next.js • AWS • Java • Go • Node.JS",
       imageUrl: "/FotoMia.jpg"
     },
     about: {
@@ -307,20 +307,9 @@ const translations: { [key: string]: Language } = {
 export default function Home() {
   const [currentLanguage, setCurrentLanguage] = useState<'es' | 'en'>('es')
   const [visibleSections, setVisibleSections] = useState<string[]>([])
+  const [activeSection, setActiveSection] = useState<string>('hero')
   const [scrollY, setScrollY] = useState(0)
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
-  const [prevCursorPosition, setPrevCursorPosition] = useState({ x: 0, y: 0 })
-  const [waves, setWaves] = useState<Array<{ 
-    id: number
-    x: number
-    y: number
-    width: number
-    height: number
-    opacity: number
-    angle: number
-    duration: number
-    isSecondary?: boolean
-  }>>([])
   const [expandedJob, setExpandedJob] = useState<number | null>(null)
   const [expandedProject, setExpandedProject] = useState<number | null>(null)
   const [carouselStates, setCarouselStates] = useState<{
@@ -329,141 +318,216 @@ export default function Home() {
   const [projectCarouselStates, setProjectCarouselStates] = useState<{
     [key: number]: { categoryIndex: number; imageIndex: number }
   }>({})
+  const [imageModal, setImageModal] = useState<{
+    isOpen: boolean
+    type: 'experience' | 'project' | null
+    index: number | null
+    categoryIndex: number
+    imageIndex: number
+  }>({
+    isOpen: false,
+    type: null,
+    index: null,
+    categoryIndex: 0,
+    imageIndex: 0
+  })
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
 
   const t = translations[currentLanguage]
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
-    let lastPosition = { x: 0, y: 0 }
-    let lastTime = Date.now()
-    let isFirstMove = true
-    let velocityX = 0
-    let velocityY = 0
-    
-    const createWave = (x: number, y: number, vx: number, vy: number, speed: number) => {
-      const angle = Math.atan2(vy, vx)
-      const magnitude = Math.sqrt(vx * vx + vy * vy)
-      
-      if (magnitude === 0) return
-      
-      const dirX = vx / magnitude
-      const dirY = vy / magnitude
-      const size = Math.min(Math.max(speed * 100, 40), 200)
-      const elongation = Math.min(speed * 50, 2.5)
-      const duration = Math.max(1 - speed * 0.5, 0.5)
-      
-      // Onda principal
-      const waveId = Date.now() + Math.random()
-      setWaves(prev => {
-        const newWaves = [...prev, {
-          id: waveId,
-          x: x,
-          y: y,
-          width: size,
-          height: size / elongation,
-          opacity: 0.8,
-          angle: angle,
-          duration: duration,
-          isSecondary: false
-        }]
-        return newWaves.slice(-15)
-      })
-      
-      // Crear múltiples ondas que se esparcen en la dirección del movimiento
-      const numSpreadWaves = Math.min(Math.floor(speed * 5) + 2, 5)
-      
-      for (let i = 0; i < numSpreadWaves; i++) {
-        setTimeout(() => {
-          // Calcular posición en la dirección del movimiento
-          const distance = (i + 1) * 25
-          const offsetX = dirX * distance
-          const offsetY = dirY * distance
-          
-          // Crear ondas que se esparcen perpendicularmente también
-          const perpAngle = angle + Math.PI / 2
-          const spreadDistance = (i % 2 === 0 ? 1 : -1) * (i * 8)
-          const perpX = Math.cos(perpAngle) * spreadDistance
-          const perpY = Math.sin(perpAngle) * spreadDistance
-          
-          const spreadId = Date.now() + Math.random() + i * 1000
-          const spreadSize = size * (0.7 - i * 0.1)
-          const spreadElongation = elongation * (1.2 + i * 0.1)
-          
-          setWaves(prev => {
-            const newWaves = [...prev, {
-              id: spreadId,
-              x: x + offsetX + perpX,
-              y: y + offsetY + perpY,
-              width: spreadSize,
-              height: spreadSize / spreadElongation,
-              opacity: 0.6 - i * 0.1,
-              angle: angle,
-              duration: duration + i * 0.2,
-              isSecondary: true
-            }]
-            return newWaves.slice(-15)
-          })
-        }, i * 80)
-      }
-    }
-    
     const handleMouseMove = (e: MouseEvent) => {
-      const currentTime = Date.now()
-      const newPosition = { x: e.clientX, y: e.clientY }
-      
-      if (!isFirstMove) {
-        const deltaTime = currentTime - lastTime
-        
-        // Calcular velocidad del mouse
-        velocityX = (newPosition.x - lastPosition.x) / deltaTime
-        velocityY = (newPosition.y - lastPosition.y) / deltaTime
-        
-        // Normalizar la velocidad para obtener dirección
-        const magnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY)
-        
-        // Solo crear ondas si hay movimiento significativo
-        if (magnitude > 0.1) {
-          createWave(newPosition.x, newPosition.y, velocityX, velocityY, magnitude)
-        }
-      } else {
-        isFirstMove = false
-      }
-      
-      setPrevCursorPosition(lastPosition)
-      setCursorPosition(newPosition)
-      lastPosition = newPosition
-      lastTime = currentTime
+      setCursorPosition({ x: e.clientX, y: e.clientY })
     }
 
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('mousemove', handleMouseMove)
 
+    // Usar un debounce para evitar parpadeo
+    let visibilityTimeouts: { [key: string]: NodeJS.Timeout } = {}
+    let lastIntersectionState: { [key: string]: boolean } = {}
+    
+    // Calcular rootMargin basado en el tamaño de la ventana
+    const getRootMargin = () => {
+      if (window.innerWidth <= 768) {
+        return '0px' // Sin margen negativo en móviles
+      }
+      return '-30px' // Margen pequeño en desktop
+    }
+    
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          const sectionId = entry.target.id
+          const wasIntersecting = lastIntersectionState[sectionId] || false
+          const isIntersecting = entry.isIntersecting
+          
+          // Actualizar estado
+          lastIntersectionState[sectionId] = isIntersecting
+          
+          // Limpiar timeout anterior si existe
+          if (visibilityTimeouts[sectionId]) {
+            clearTimeout(visibilityTimeouts[sectionId])
+            delete visibilityTimeouts[sectionId]
+          }
+          
+          if (isIntersecting) {
+            // Agregar sección inmediatamente cuando entra al viewport
             setVisibleSections(prev => 
-              prev.includes(entry.target.id) 
+              prev.includes(sectionId) 
                 ? prev 
-                : [...prev, entry.target.id]
+                : [...prev, sectionId]
             )
           } else {
-            setVisibleSections(prev => 
-              prev.filter(id => id !== entry.target.id)
-            )
+            // Verificar si hay contenido expandido
+            const sectionElement = entry.target as HTMLElement
+            const hasExpandedContent = sectionElement.querySelector('.expanded-content') !== null
+            
+            // Si tiene contenido expandido, mantener visible siempre
+            // Incluso si sale un poco del viewport, mantener visible
+            if (hasExpandedContent) {
+              setVisibleSections(prev => 
+                prev.includes(sectionId) 
+                  ? prev 
+                  : [...prev, sectionId]
+              )
+              // No ocultar nunca si tiene contenido expandido
+              return
+            }
+            
+            // Solo remover si realmente salió del viewport
+            const rect = entry.boundingClientRect
+            const viewportHeight = window.innerHeight
+            // Umbral más generoso para evitar parpadeo
+            // En móvil, ser aún más generoso
+            const threshold = window.innerWidth <= 768 ? 200 : 100
+            const isReallyOut = rect.bottom < -threshold || rect.top > viewportHeight + threshold
+            
+            // Si no está realmente fuera, mantener visible
+            if (!isReallyOut) {
+              return
+            }
+            
+            // Solo ocultar después de un delay y si cambió de estado
+            if (wasIntersecting) {
+              visibilityTimeouts[sectionId] = setTimeout(() => {
+                // Verificar nuevamente antes de ocultar
+                const currentRect = sectionElement.getBoundingClientRect()
+                const currentThreshold = window.innerWidth <= 768 ? 200 : 100
+                const stillOut = currentRect.bottom < -currentThreshold || currentRect.top > viewportHeight + currentThreshold
+                const stillHasExpanded = sectionElement.querySelector('.expanded-content') !== null
+                
+                // Solo ocultar si realmente está fuera y no tiene contenido expandido
+                if (stillOut && !stillHasExpanded) {
+                  setVisibleSections(prev => 
+                    prev.filter(id => id !== sectionId)
+                  )
+                }
+                delete visibilityTimeouts[sectionId]
+              }, 800) // Delay aún más largo para evitar parpadeo, especialmente en móvil
+            }
           }
         })
       },
-      { threshold: 0.2, rootMargin: '-50px' }
+      { 
+        threshold: [0, 0.1, 0.2], // Thresholds más simples
+        rootMargin: getRootMargin()
+      }
     )
 
     const sections = document.querySelectorAll('[data-section]')
     sections.forEach((section) => observer.observe(section))
 
+    // Función para determinar la sección más visible y si está entre dos
+    const updateActiveSection = () => {
+      const sectionElements = Array.from(document.querySelectorAll('[data-section]')) as HTMLElement[]
+      const viewportMiddle = window.scrollY + window.innerHeight / 2
+      
+      let mostVisibleSection = 'hero'
+      let maxVisibility = 0
+      let secondSection: string | null = null
+      let secondVisibility = 0
+      
+      sectionElements.forEach((section) => {
+        const rect = section.getBoundingClientRect()
+        const sectionTop = window.scrollY + rect.top
+        const sectionBottom = sectionTop + rect.height
+        const sectionCenter = sectionTop + rect.height / 2
+        
+        // Calcular cuánto de la sección está visible en el viewport
+        const visibleTop = Math.max(sectionTop, window.scrollY)
+        const visibleBottom = Math.min(sectionBottom, window.scrollY + window.innerHeight)
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+        const visibilityRatio = visibleHeight / window.innerHeight
+        
+        // Calcular distancia del centro del viewport al centro de la sección
+        const distanceFromCenter = Math.abs(viewportMiddle - sectionCenter)
+        const normalizedDistance = Math.min(distanceFromCenter / window.innerHeight, 1)
+        // Score más alto si está más cerca del centro y más visible
+        const proximityScore = visibilityRatio * (1 - normalizedDistance * 0.7)
+        
+        if (proximityScore > maxVisibility) {
+          // Mover la sección actual a segunda posición
+          secondSection = mostVisibleSection
+          secondVisibility = maxVisibility
+          // Nueva sección más visible
+          mostVisibleSection = section.id
+          maxVisibility = proximityScore
+        } else if (proximityScore > secondVisibility) {
+          secondSection = section.id
+          secondVisibility = proximityScore
+        }
+      })
+      
+      // Si hay dos secciones con visibilidad similar (está entre ellas)
+      const visibilityDifference = maxVisibility - secondVisibility
+      // Ajustar el umbral para detectar mejor cuando está entre dos secciones
+      if (secondSection && visibilityDifference < 0.25 && maxVisibility > 0.15 && secondVisibility > 0.1) {
+        // Ordenar las secciones para mantener consistencia
+        const sections = ['hero', 'about', 'experience', 'projects', 'skills', 'contact']
+        const firstIndex = sections.indexOf(mostVisibleSection)
+        const secondIndex = sections.indexOf(secondSection)
+        
+        if (firstIndex < secondIndex) {
+          setActiveSection(`${mostVisibleSection}-${secondSection}`)
+        } else {
+          setActiveSection(`${secondSection}-${mostVisibleSection}`)
+        }
+      } else {
+        setActiveSection(mostVisibleSection)
+      }
+    }
+
+    // Actualizar sección activa en scroll - usar requestAnimationFrame para mejor performance
+    let rafId: number | null = null
+    let isUpdating = false
+    
+    const handleScrollForActive = () => {
+      if (!isUpdating) {
+        isUpdating = true
+        rafId = requestAnimationFrame(() => {
+          updateActiveSection()
+          isUpdating = false
+        })
+      }
+    }
+
+    window.addEventListener('scroll', handleScrollForActive, { passive: true })
+    
+    // Actualizar al cargar y después de un pequeño delay
+    setTimeout(updateActiveSection, 100)
+    setTimeout(updateActiveSection, 500)
+
     return () => {
       observer.disconnect()
+      // Limpiar todos los timeouts
+      Object.values(visibilityTimeouts).forEach(timeout => clearTimeout(timeout))
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
       window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('scroll', handleScrollForActive)
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
@@ -718,19 +782,35 @@ export default function Home() {
     setCurrentLanguage(prev => prev === 'es' ? 'en' : 'es')
   }
   
-  const downloadCV = () => {
+  const downloadCV = React.useCallback(() => {
     const link = document.createElement('a')
-    link.href = '/Alexis Federico Davis - CV - 2025.pdf'
-    link.download = 'Alexis_Davis_CV.pdf'
+    // Usar el idioma actual para determinar qué CV descargar
+    const isEnglish = currentLanguage === 'en'
+    if (isEnglish) {
+      link.href = '/Alexis Federico Davis - CV - ENG.pdf'
+      link.download = 'Alexis_Davis_CV_ENG.pdf'
+    } else {
+      link.href = '/Alexis Federico Davis - CV.pdf'
+      link.download = 'Alexis_Davis_CV.pdf'
+    }
     link.click()
-  }
+  }, [currentLanguage])
 
-  const downloadCVHardvard = () => {
+  const downloadCVHardvard = React.useCallback(() => {
     const link = document.createElement('a')
-    link.href = '/Alexis_Federico_Davis_CV.pdf'
-    link.download = 'Alexis_Federico_Davis_CV.pdf'
+    // Descargar el CV en el idioma alternativo
+    const isEnglish = currentLanguage === 'en'
+    if (isEnglish) {
+      // Si está en inglés, descargar CV en español
+      link.href = '/Alexis Federico Davis - CV.pdf'
+      link.download = 'Alexis_Davis_CV.pdf'
+    } else {
+      // Si está en español, descargar CV en inglés
+      link.href = '/Alexis Federico Davis - CV - ENG.pdf'
+      link.download = 'Alexis_Davis_CV_ENG.pdf'
+    }
     link.click()
-  }
+  }, [currentLanguage])
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -917,58 +997,6 @@ export default function Home() {
           box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
         }
         
-        .wave {
-          position: fixed;
-          border-radius: 50%;
-          background: radial-gradient(circle at center, 
-            rgba(255, 255, 255, 0.4) 0%,
-            rgba(139, 92, 246, 0.3) 30%,
-            rgba(236, 72, 153, 0.2) 60%,
-            transparent 100%
-          );
-          pointer-events: none;
-          z-index: 9998;
-          transform: translate(-50%, -50%);
-          filter: blur(2px);
-          box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-        }
-        
-        .wave-primary {
-          animation: wave-expand-elliptical 2s ease-out forwards;
-        }
-        
-        .wave-secondary {
-          animation: wave-expand-elliptical-secondary 2s ease-out forwards;
-        }
-        
-        @keyframes wave-expand-elliptical {
-          0% {
-            transform: translate(-50%, -50%) scale(0);
-            opacity: 0.8;
-          }
-          50% {
-            opacity: 0.5;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0;
-          }
-        }
-        
-        @keyframes wave-expand-elliptical-secondary {
-          0% {
-            transform: translate(-50%, -50%) scale(0);
-            opacity: 0.6;
-          }
-          50% {
-            opacity: 0.3;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0;
-          }
-        }
-        
         @keyframes water-drip {
           0%, 100% {
             opacity: 0.6;
@@ -977,6 +1005,47 @@ export default function Home() {
           50% {
             opacity: 0.9;
             transform: translateX(-50%) scaleY(1.2);
+          }
+        }
+        
+        @keyframes water-merge-top {
+          0%, 100% {
+            transform: translateX(-50%) translateY(-50%) scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: translateX(-50%) translateY(-30%) scale(1.3);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes water-merge-bottom {
+          0%, 100% {
+            transform: translateX(-50%) translateY(50%) scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: translateX(-50%) translateY(30%) scale(1.3);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes water-merge-flow {
+          0%, 100% {
+            opacity: 0.7;
+            transform: translateX(-50%) scaleY(1);
+          }
+          25% {
+            opacity: 0.9;
+            transform: translateX(-50%) scaleY(1.1);
+          }
+          50% {
+            opacity: 1;
+            transform: translateX(-50%) scaleY(1.2);
+          }
+          75% {
+            opacity: 0.9;
+            transform: translateX(-50%) scaleY(1.1);
           }
         }
         
@@ -994,8 +1063,26 @@ export default function Home() {
           transform: scale(1);
         }
         
+        .modal-image {
+          transition: opacity 0.3s ease-in-out;
+        }
+        
+        .modal-image.fade-in {
+          opacity: 1;
+        }
+        
         * {
           cursor: none !important;
+        }
+        
+        @media (max-width: 768px) {
+          * {
+            cursor: auto !important;
+          }
+          
+          .cursor-dot {
+            display: none !important;
+          }
         }
         
         .animate-float {
@@ -1086,33 +1173,14 @@ export default function Home() {
       `}</style>
 
       {/* Cursor personalizado pequeño y redondeado */}
-      <div 
+          <div 
         className="cursor-dot"
-        style={{
+            style={{ 
           left: `${cursorPosition.x}px`,
           top: `${cursorPosition.y}px`,
         }}
       />
       
-      {/* Ondas del cursor en dirección del movimiento */}
-      {waves.map((wave) => (
-        <div
-          key={wave.id}
-          className={`wave ${wave.isSecondary ? 'wave-secondary' : 'wave-primary'}`}
-          style={{
-            left: `${wave.x}px`,
-            top: `${wave.y}px`,
-            width: `${wave.width}px`,
-            height: `${wave.height}px`,
-            transform: `translate(-50%, -50%) rotate(${wave.angle}rad)`,
-            animationDuration: `${wave.duration}s`,
-            opacity: wave.opacity
-          }}
-          onAnimationEnd={() => {
-            setWaves(prev => prev.filter(w => w.id !== wave.id))
-          }}
-        />
-      ))}
 
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-950 to-pink-950"></div>
@@ -1125,10 +1193,10 @@ export default function Home() {
         />
       </div>
 
-      <div className="fixed top-6 right-6 z-50">
+      <div className="fixed top-4 right-4 md:top-6 md:right-6 z-50">
         <button
           onClick={toggleLanguage}
-          className="glass-card-enhanced px-6 py-3 text-white font-medium hover:scale-105 transition-all duration-300 group"
+          className="glass-card-enhanced px-4 py-2 md:px-6 md:py-3 text-white font-medium hover:scale-105 active:scale-95 transition-all duration-300 group text-sm md:text-base touch-manipulation"
         >
           <span className="group-hover:text-purple-300 transition-colors">
             {currentLanguage === 'es' ? '🇺🇸 EN' : '🇦🇷 ES'}
@@ -1136,17 +1204,22 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="fixed right-8 top-1/2 transform -translate-y-1/2 z-40">
+      <div className="fixed right-4 md:right-8 top-1/2 transform -translate-y-1/2 z-40 hidden md:block">
         <div className="relative space-y-3">
           {['hero', 'about', 'experience', 'projects', 'skills', 'contact'].map((section, index) => {
-            const isActive = visibleSections.includes(section)
             const nextSection = ['hero', 'about', 'experience', 'projects', 'skills', 'contact'][index + 1]
-            const isNextActive = nextSection ? visibleSections.includes(nextSection) : false
-            const isBetween = isActive && isNextActive
+            
+            // Verificar si esta sección está activa
+            const isActive = activeSection === section || activeSection.startsWith(section + '-')
+            // Verificar si la siguiente está activa
+            const isNextActive = nextSection ? (activeSection === nextSection || activeSection.endsWith('-' + nextSection)) : false
+            // Está entre dos secciones si ambas están activas o si activeSection contiene ambas
+            const isBetween = isActive && isNextActive || 
+                             (activeSection.includes(section) && nextSection && activeSection.includes(nextSection))
             
             return (
               <div key={section} className="relative">
-                <button
+          <button
                   onClick={() => {
                     const element = document.getElementById(section)
                     if (element) {
@@ -1161,24 +1234,48 @@ export default function Home() {
                       }
                     }
                   }}
-                  className={`w-3 h-3 rounded-full transition-all duration-500 block relative z-10 ${
+                  className={`w-3 h-3 rounded-full transition-all duration-500 block relative z-10 touch-manipulation ${
                     isActive              
-                      ? 'bg-purple-400 scale-175 shadow-lg shadow-purple-400/50' 
-                      : 'bg-white/30 hover:bg-white/50'
-                  }`}
-                />
-                {/* Conexión entre botones cuando están activos - efecto de gota de agua */}
+                ? 'bg-purple-400 scale-175 shadow-lg shadow-purple-400/50' 
+                : 'bg-white/30 hover:bg-white/50 active:bg-white/70'
+            }`}
+          />
+                {/* Conexión entre botones cuando están activos - efecto de gotas de agua juntándose */}
                 {isBetween && (
-                  <div 
-                    className="absolute left-1/2 top-3 w-1 h-3 rounded-full"
-                    style={{
-                      transform: 'translateX(-50%)',
-                      background: 'linear-gradient(to bottom, rgba(139, 92, 246, 0.8) 0%, rgba(236, 72, 153, 0.6) 50%, rgba(139, 92, 246, 0.4) 100%)',
-                      boxShadow: '0 0 10px rgba(139, 92, 246, 0.5), inset 0 0 5px rgba(255, 255, 255, 0.3)',
-                      animation: 'water-drip 2s ease-in-out infinite',
-                      filter: 'blur(0.5px)'
-                    }}
-                  />
+                  <>
+                    {/* Gota superior expandiéndose */}
+                    <div 
+                      className="absolute left-1/2 top-0 w-3 h-3 rounded-full transition-all duration-300"
+                      style={{
+                        transform: 'translateX(-50%) translateY(-50%)',
+                        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.9) 0%, rgba(139, 92, 246, 0.5) 50%, transparent 100%)',
+                        boxShadow: '0 0 15px rgba(139, 92, 246, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.4)',
+                        animation: 'water-merge-top 1.5s ease-in-out infinite',
+                      }}
+                    />
+                    {/* Conexión fluida entre gotas */}
+                    <div 
+                      className="absolute left-1/2 top-3 w-1.5 rounded-full transition-all duration-300"
+                      style={{
+                        height: '12px',
+                        transform: 'translateX(-50%)',
+                        background: 'linear-gradient(to bottom, rgba(139, 92, 246, 0.9) 0%, rgba(236, 72, 153, 0.8) 30%, rgba(139, 92, 246, 0.7) 60%, rgba(236, 72, 153, 0.6) 100%)',
+                        boxShadow: '0 0 12px rgba(139, 92, 246, 0.6), inset 0 0 6px rgba(255, 255, 255, 0.3)',
+                        animation: 'water-merge-flow 2s ease-in-out infinite',
+                        filter: 'blur(0.5px)'
+                      }}
+                    />
+                    {/* Gota inferior expandiéndose */}
+                    <div 
+                      className="absolute left-1/2 top-3 w-3 h-3 rounded-full transition-all duration-300"
+                      style={{
+                        transform: 'translateX(-50%) translateY(50%)',
+                        background: 'radial-gradient(circle, rgba(236, 72, 153, 0.9) 0%, rgba(236, 72, 153, 0.5) 50%, transparent 100%)',
+                        boxShadow: '0 0 15px rgba(236, 72, 153, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.4)',
+                        animation: 'water-merge-bottom 1.5s ease-in-out infinite',
+                      }}
+                    />
+                  </>
                 )}
               </div>
             )
@@ -1193,11 +1290,11 @@ export default function Home() {
           visibleSections.includes('hero') ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-20 scale-95'
         }`}
       >
-        <div className="glass-card-hero text-center max-w-4xlmx-auto p-12 relative ">
+        <div className="glass-card-hero text-center max-w-4xl mx-auto p-6 md:p-12 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-blue-500/5 animate-gradient-shift"></div>
           <div className="relative z-10">
-            <div className="mb-8 inline-block">
-              <div className="w-64 h-64 mx-auto mb-6 relative">
+            <div className="mb-6 md:mb-8 inline-block">
+              <div className="w-32 h-32 md:w-64 md:h-64 mx-auto mb-4 md:mb-6 relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse"></div>
                 <div className="absolute inset-3 bg-gray-900 rounded-full flex items-center justify-center">
                   <img
@@ -1207,20 +1304,20 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 mb-4 animate-fade-in-up">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 mb-3 md:mb-4 animate-fade-in-up leading-tight">
               {t.hero.name}
             </h1>
-            <h2 className="text-3xl md:text-4xl text-blue-200 mb-6 animate-fade-in-up-delay font-light">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-blue-200 mb-4 md:mb-6 animate-fade-in-up-delay font-light">
               {t.hero.title}
             </h2>
-            <p className="text-lg md:text-xl text-gray-300 mb-6 animate-fade-in-up-delay-2 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 mb-4 md:mb-6 animate-fade-in-up-delay-2 max-w-2xl mx-auto px-4">
               {t.hero.description}
             </p>
-            <div className="flex flex-wrap justify-center gap-3 mt-8">
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-6 md:mt-8 px-4">
               {t.hero.technologies.split(' • ').map((tech, index) => (
                 <span 
                   key={index}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 rounded-full text-sm font-medium border border-purple-400/20 backdrop-blur-sm hover:scale-105 transition-transform duration-300"
+                  className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 rounded-full text-xs md:text-sm font-medium border border-purple-400/20 backdrop-blur-sm hover:scale-105 active:scale-95 transition-transform duration-300"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {tech}
@@ -1234,40 +1331,42 @@ export default function Home() {
       <section 
         id="about" 
         data-section 
-        className={`py-20 px-6 transition-all duration-1000 transform ${
+        className={`py-12 md:py-20 px-4 md:px-6 transition-all duration-1000 transform ${
           visibleSections.includes('about') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}
       >
         <div className="max-w-4xl mx-auto">
-          <div className="glass-card-enhanced p-8 md:p-12 relative  group">
+          <div className="glass-card-enhanced p-6 md:p-8 lg:p-12 relative group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-8">
                 <div className="p-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl">
                   <Star className="w-8 h-8 text-purple-300" />
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold text-white">
-                  {t.about.title}
-                </h2>
-              </div>
-              <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+                {t.about.title}
+              </h2>
+            </div>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 leading-relaxed mb-6 md:mb-8">
                 {t.about.content}
               </p>
               
-              <button 
-                onClick={downloadCV}
-                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-pink-500 transform hover:scale-105 hover:shadow-2xl transition-all duration-300 group"
-              >
-                <Download className="w-5 h-5 group-hover:animate-bounce" />
-                {t.about.downloadCV}
-              </button>
-              <button 
-                onClick={downloadCVHardvard} style={{ marginLeft: '2%' }}
-                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-pink-500 transform hover:scale-105 hover:shadow-2xl transition-all duration-300 group"
-              >
-                <Download className="w-5 h-5 group-hover:animate-bounce" />
-                {t.about.downloadCVHardvard}
-              </button>
+              <div className="flex flex-wrap gap-3 md:gap-4 justify-center md:justify-start">
+                <button 
+                  onClick={downloadCV}
+                  className="inline-flex items-center gap-2 md:gap-3 px-4 py-2.5 md:px-6 md:py-3 lg:px-8 lg:py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-pink-500 transform hover:scale-105 active:scale-95 hover:shadow-2xl transition-all duration-300 group text-xs sm:text-sm md:text-base touch-manipulation flex-1 sm:flex-none"
+                >
+                  <Download className="w-4 h-4 md:w-5 md:h-5 group-hover:animate-bounce" />
+                  {t.about.downloadCV}
+                </button>
+                <button 
+                  onClick={downloadCVHardvard}
+                  className="inline-flex items-center gap-2 md:gap-3 px-4 py-2.5 md:px-6 md:py-3 lg:px-8 lg:py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-pink-500 transform hover:scale-105 active:scale-95 hover:shadow-2xl transition-all duration-300 group text-xs sm:text-sm md:text-base touch-manipulation flex-1 sm:flex-none"
+                >
+                  <Download className="w-4 h-4 md:w-5 md:h-5 group-hover:animate-bounce" />
+                  {t.about.downloadCVHardvard}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1276,21 +1375,21 @@ export default function Home() {
       <section 
         id="experience" 
         data-section 
-        className={`py-20 px-6 transition-all duration-1000 transform ${
+        className={`py-12 md:py-20 px-4 md:px-6 transition-all duration-1000 transform ${
           visibleSections.includes('experience') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}
       >
         <div className="max-w-4xl mx-auto">
-          <div className="glass-card-enhanced p-8 md:p-12">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl">
-                <Briefcase className="w-8 h-8 text-blue-300" />
+          <div className="glass-card-enhanced p-6 md:p-8 lg:p-12">
+            <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+              <div className="p-2 md:p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl">
+                <Briefcase className="w-6 h-6 md:w-8 md:h-8 text-blue-300" />
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
                 {t.experience.title}
               </h2>
             </div>
-            <div className="space-y-8">
+            <div className="space-y-6 md:space-y-8">
               {t.experience.jobs.map((job, index) => {
                 const isExpanded = expandedJob === index
                 const hasExtendedDescription = !!job.extendedDescription
@@ -1299,9 +1398,9 @@ export default function Home() {
                 return (
                   <div key={index} className="relative">
                     <div 
-                      className={`bg-white/5 rounded-xl p-6 transition-all duration-500 ${
-                        isExpanded ? 'bg-white/10' : 'hover:bg-white/10'
-                      } hover:transform hover:scale-[1.02] cursor-pointer`}
+                      className={`bg-white/5 rounded-xl p-4 md:p-6 transition-all duration-500 ${
+                        isExpanded ? 'bg-white/10' : 'hover:bg-white/10 active:bg-white/10'
+                      } hover:transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer touch-manipulation`}
                       onClick={() => {
                         if (hasExtendedDescription || hasImages) {
                           setExpandedJob(isExpanded ? null : index)
@@ -1316,12 +1415,12 @@ export default function Home() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                    <h3 className="text-2xl font-semibold text-white mb-2">
+                    <h3 className="text-xl md:text-2xl font-semibold text-white mb-2">
                       {job.title}
                     </h3>
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                      <span className="text-blue-200 font-medium text-lg">{job.company}</span>
-                      <span className="text-gray-400 text-sm bg-white/10 px-3 py-1 rounded-full">{job.period}</span>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 md:mb-4 gap-2 md:gap-0">
+                      <span className="text-blue-200 font-medium text-base md:text-lg">{job.company}</span>
+                      <span className="text-gray-400 text-xs md:text-sm bg-white/10 px-2 py-1 md:px-3 rounded-full inline-block w-fit">{job.period}</span>
                     </div>
                           
                           {/* Texto que se transforma */}
@@ -1351,14 +1450,14 @@ export default function Home() {
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <p className="text-gray-200 leading-relaxed whitespace-pre-line">
+                                <p className="text-sm sm:text-base md:text-lg text-gray-200 leading-relaxed whitespace-pre-line">
                                   {job.extendedDescription}
                                 </p>
                               </div>
                             )}
                           </div>
                           
-                    <div className="text-purple-300 text-sm font-medium">
+                    <div className="text-purple-300 text-xs md:text-sm font-medium">
                       {job.technologies}
                     </div>
                   </div>
@@ -1387,12 +1486,12 @@ export default function Home() {
                       
                       {isExpanded && (
                         <div 
-                          className="mt-6 pt-6 border-t border-white/10 animate-fade-in-up"
+                          className="expanded-content mt-6 pt-6 border-t border-white/10 animate-fade-in-up"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {hasImages && (
                             <div className="mt-8">
-                              <h4 className="text-xl font-semibold text-white mb-4">
+                              <h4 className="text-lg md:text-xl font-semibold text-white mb-4">
                                 {currentLanguage === 'es' ? 'Galería de Imágenes' : 'Image Gallery'}
                               </h4>
                               
@@ -1401,7 +1500,7 @@ export default function Home() {
                                 const currentCarousel = carouselStates[index] || { categoryIndex: 0, imageIndex: 0 }
                                 return (
                                   <>
-                                    <div className="flex flex-wrap gap-2 mb-6">
+                                    <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
                                       {job.images!.map((category, catIndex) => (
                                         <button
                                           key={catIndex}
@@ -1412,10 +1511,10 @@ export default function Home() {
                                               [index]: { categoryIndex: catIndex, imageIndex: 0 }
                                             }))
                                           }}
-                                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                                          className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-300 touch-manipulation active:scale-95 ${
                                             currentCarousel.categoryIndex === catIndex
                                               ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                                              : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                                              : 'bg-white/10 text-gray-300 hover:bg-white/20 active:bg-white/30'
                                           }`}
                                         >
                                           {category.category}
@@ -1426,7 +1525,19 @@ export default function Home() {
                                     {/* Carrusel */}
                                     {job.images![currentCarousel.categoryIndex] && (
                                       <div className="relative">
-                                        <div className="relative w-full h-96 bg-black/20 rounded-xl overflow-hidden">
+                                        <div 
+                                          className="relative w-full h-64 md:h-96 bg-black/20 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setImageModal({
+                                              isOpen: true,
+                                              type: 'experience',
+                                              index: index,
+                                              categoryIndex: currentCarousel.categoryIndex,
+                                              imageIndex: currentCarousel.imageIndex
+                                            })
+                                          }}
+                                        >
                                           <img
                                             key={`${currentCarousel.categoryIndex}-${currentCarousel.imageIndex}`}
                                             src={encodeURI(job.images![currentCarousel.categoryIndex].images[currentCarousel.imageIndex])}
@@ -1464,9 +1575,9 @@ export default function Home() {
                                                     }
                                                   })
                                                 }}
-                                                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all duration-300 z-10"
+                                                className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-black/50 hover:bg-black/70 active:bg-black/90 rounded-full text-white transition-all duration-300 z-10 touch-manipulation"
                                               >
-                                                <ChevronLeft className="w-6 h-6" />
+                                                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                               </button>
                                               <button
                                                 onClick={(e) => {
@@ -1484,9 +1595,9 @@ export default function Home() {
                                                     }
                                                   })
                                                 }}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all duration-300 z-10"
+                                                className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-black/50 hover:bg-black/70 active:bg-black/90 rounded-full text-white transition-all duration-300 z-10 touch-manipulation"
                                               >
-                                                <ChevronRight className="w-6 h-6" />
+                                                <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                                               </button>
                                               
                                               {/* Indicadores */}
@@ -1541,22 +1652,22 @@ export default function Home() {
       <section 
         id="projects" 
         data-section 
-        className={`py-20 px-6 transition-all duration-1000 transform ${
+        className={`py-12 md:py-20 px-4 md:px-6 transition-all duration-1000 transform ${
           visibleSections.includes('projects') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}
       >
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-4 mb-4">
-              <div className="p-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl">
-                <Code className="w-8 h-8 text-green-300" />
+          <div className="text-center mb-8 md:mb-12">
+            <div className="inline-flex items-center gap-3 md:gap-4 mb-4">
+              <div className="p-2 md:p-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl">
+                <Code className="w-6 h-6 md:w-8 md:h-8 text-green-300" />
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
                 {t.projects.title}
               </h2>
             </div>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-6 md:space-y-8">
             {t.projects.items.map((project, index) => {
               const isExpanded = expandedProject === index
               const hasExtendedDescription = !!project.extendedDescription
@@ -1565,9 +1676,9 @@ export default function Home() {
               return (
                 <div key={index} className="relative">
                   <div 
-                    className={`glass-card-enhanced p-8 transition-all duration-500 ${
-                      isExpanded ? 'bg-white/10' : 'hover:bg-white/10'
-                    } hover:transform hover:scale-[1.02] cursor-pointer`}
+                    className={`glass-card-enhanced p-4 md:p-6 lg:p-8 transition-all duration-500 ${
+                      isExpanded ? 'bg-white/10' : 'hover:bg-white/10 active:bg-white/10'
+                    } hover:transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer touch-manipulation`}
                     onClick={() => {
                       if (hasExtendedDescription || hasImages) {
                         setExpandedProject(isExpanded ? null : index)
@@ -1582,9 +1693,9 @@ export default function Home() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="text-2xl font-semibold text-white mb-4">
-                          {project.name}
-                        </h3>
+                        <h3 className="text-xl md:text-2xl font-semibold text-white mb-3 md:mb-4">
+                    {project.name}
+                  </h3>
                         
                         {/* Texto que se transforma */}
                         <div className="relative mb-4 overflow-hidden">
@@ -1597,9 +1708,9 @@ export default function Home() {
                                 opacity: isExpanded && hasExtendedDescription ? 0 : 1
                               }}
                             >
-                              <p className="text-gray-300 leading-relaxed">
-                                {project.description}
-                              </p>
+                                <p className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed">
+                                  {project.description}
+                                </p>
                             </div>
                           ) : null}
                           {hasExtendedDescription && (
@@ -1613,24 +1724,24 @@ export default function Home() {
                               }}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <p className="text-gray-200 leading-relaxed whitespace-pre-line">
-                                {project.extendedDescription}
-                              </p>
+                                <p className="text-sm sm:text-base md:text-lg text-gray-200 leading-relaxed whitespace-pre-line">
+                                  {project.extendedDescription}
+                                </p>
                             </div>
                           )}
                         </div>
                         
-                        <div className="flex flex-wrap gap-2">
-                          {project.technologies.map((tech, techIndex) => (
-                            <span 
-                              key={techIndex}
-                              className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-200 rounded-full text-sm font-medium border border-blue-400/20 hover:scale-110 transition-transform duration-200"
-                            >
-                              {tech}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                  <div className="flex flex-wrap gap-2">
+                    {project.technologies.map((tech, techIndex) => (
+                      <span 
+                        key={techIndex}
+                        className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-200 rounded-full text-sm font-medium border border-blue-400/20 hover:scale-110 transition-transform duration-200"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
                       {(hasExtendedDescription || hasImages) && (
                         <button
                           onClick={(e) => {
@@ -1652,16 +1763,16 @@ export default function Home() {
                           )}
                         </button>
                       )}
-                    </div>
+              </div>
                     
                     {isExpanded && (
                       <div 
-                        className="mt-6 pt-6 border-t border-white/10 animate-fade-in-up"
+                        className="expanded-content mt-6 pt-6 border-t border-white/10 animate-fade-in-up"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {hasImages && (
                           <div className="mt-8">
-                            <h4 className="text-xl font-semibold text-white mb-4">
+                            <h4 className="text-lg md:text-xl font-semibold text-white mb-4">
                               {currentLanguage === 'es' ? 'Galería de Imágenes' : 'Image Gallery'}
                             </h4>
                             
@@ -1670,7 +1781,7 @@ export default function Home() {
                               const currentCarousel = projectCarouselStates[index] || { categoryIndex: 0, imageIndex: 0 }
                               return (
                                 <>
-                                  <div className="flex flex-wrap gap-2 mb-6">
+                                  <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
                                     {project.images!.map((category, catIndex) => (
                                       <button
                                         key={catIndex}
@@ -1681,10 +1792,10 @@ export default function Home() {
                                             [index]: { categoryIndex: catIndex, imageIndex: 0 }
                                           }))
                                         }}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                                        className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-300 touch-manipulation active:scale-95 ${
                                           currentCarousel.categoryIndex === catIndex
                                             ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                                            : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                                            : 'bg-white/10 text-gray-300 hover:bg-white/20 active:bg-white/30'
                                         }`}
                                       >
                                         {category.category}
@@ -1695,7 +1806,19 @@ export default function Home() {
                                   {/* Carrusel */}
                                   {project.images![currentCarousel.categoryIndex] && (
                                     <div className="relative">
-                                      <div className="relative w-full h-96 bg-black/20 rounded-xl overflow-hidden">
+                                      <div 
+                                        className="relative w-full h-64 md:h-96 bg-black/20 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setImageModal({
+                                            isOpen: true,
+                                            type: 'project',
+                                            index: index,
+                                            categoryIndex: currentCarousel.categoryIndex,
+                                            imageIndex: currentCarousel.imageIndex
+                                          })
+                                        }}
+                                      >
                                         <img
                                           key={`${currentCarousel.categoryIndex}-${currentCarousel.imageIndex}`}
                                           src={encodeURI(project.images![currentCarousel.categoryIndex].images[currentCarousel.imageIndex])}
@@ -1733,9 +1856,9 @@ export default function Home() {
                                                   }
                                                 })
                                               }}
-                                              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all duration-300 z-10"
+                                              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-black/50 hover:bg-black/70 active:bg-black/90 rounded-full text-white transition-all duration-300 z-10 touch-manipulation"
                                             >
-                                              <ChevronLeft className="w-6 h-6" />
+                                              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                             </button>
                                             <button
                                               onClick={(e) => {
@@ -1753,9 +1876,9 @@ export default function Home() {
                                                   }
                                                 })
                                               }}
-                                              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all duration-300 z-10"
+                                              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-black/50 hover:bg-black/70 active:bg-black/90 rounded-full text-white transition-all duration-300 z-10 touch-manipulation"
                                             >
-                                              <ChevronRight className="w-6 h-6" />
+                                              <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                                             </button>
                                             
                                             {/* Indicadores */}
@@ -1809,34 +1932,34 @@ export default function Home() {
       <section 
         id="skills" 
         data-section 
-        className={`py-20 px-6 transition-all duration-1000 transform ${
+        className={`py-12 md:py-20 px-4 md:px-6 transition-all duration-1000 transform ${
           visibleSections.includes('skills') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-4 mb-12">
-              <div className="p-3 bg-gradient-to-r from-red-500/20 to-pink-400/20 rounded-xl">
-                <SquareChartGantt className="w-8 h-8 text-violet-300" />
+          <div className="inline-flex items-center gap-3 md:gap-4 mb-8 md:mb-12">
+              <div className="p-2 md:p-3 bg-gradient-to-r from-red-500/20 to-pink-400/20 rounded-xl">
+                <SquareChartGantt className="w-6 h-6 md:w-8 md:h-8 text-violet-300" />
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
                 {t.skills.title}
               </h2>
             </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
             {t.skills.categories.map((category, index) => (
               <div 
                 key={index} 
-                className="glass-card-enhanced p-6 hover:bg-white/10 transition-all duration-300 transform hover:scale-105"
+                className="glass-card-enhanced p-4 md:p-6 hover:bg-white/10 transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <h3 className="text-xl font-semibold text-white mb-6 text-center">
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6 text-center">
                   {category.name}
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   {category.items.map((skill, skillIndex) => (
                     <div 
                       key={skillIndex}
-                      className="bg-gradient-to-r from-white/10 to-white/5 text-center py-3 px-4 rounded-lg text-gray-200 hover:from-purple-500/20 hover:to-pink-500/20 hover:text-white hover:scale-105 transition-all duration-300 cursor-pointer border border-white/10 hover:border-purple-400/30"
+                      className="bg-gradient-to-r from-white/10 to-white/5 text-center py-2 px-3 md:py-3 md:px-4 rounded-lg text-sm md:text-base text-gray-200 hover:from-purple-500/20 hover:to-pink-500/20 hover:text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer border border-white/10 hover:border-purple-400/30 touch-manipulation"
                     >
                       {skill}
                     </div>
@@ -1851,44 +1974,49 @@ export default function Home() {
       <section 
         id="contact" 
         data-section 
-        className={`py-20 px-6 transition-all duration-1000 transform relative z-10 ${
+        className={`py-12 md:py-20 px-4 md:px-6 transition-all duration-1000 transform relative z-10 ${
           visibleSections.includes('contact') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <div className="glass-card-enhanced p-8 md:p-12 relative group">
+          <div className="glass-card-enhanced p-6 md:p-8 lg:p-12 relative group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-4 mb-8">
-                <div className="p-3 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-xl">
-                  <Mail className="w-8 h-8 text-pink-300" />
+              <div className="inline-flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                <div className="p-2 md:p-3 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-xl">
+                  <Mail className="w-6 h-6 md:w-8 md:h-8 text-pink-300" />
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold text-white">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
                   {t.contact.title}
                 </h2>
               </div>
-              <div className="grid md:grid-cols-3 gap-6 text-lg">
-                <div className="glass-card p-6 hover:bg-white/10 transition-all duration-300 group">
-                  <Mail className="w-8 h-8 text-blue-300 mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                  <p className="text-gray-300">
+              <div className="grid md:grid-cols-3 gap-4 md:gap-6 text-base md:text-lg">
+                <div className="glass-card p-4 md:p-6 hover:bg-white/10 active:bg-white/10 transition-all duration-300 group touch-manipulation">
+                  <Mail className="w-6 h-6 md:w-8 md:h-8 text-blue-300 mx-auto mb-3 md:mb-4 group-hover:scale-110 transition-transform" />
+                  <p className="text-gray-300 text-sm md:text-base">
                     <span className="text-blue-200 font-medium block mb-2">Email</span>
-                    <a href={`mailto:${t.contact.email}`} className="hover:text-blue-300 transition-colors">
+                    <a href={`mailto:${t.contact.email}`} className="hover:text-blue-300 transition-colors break-all">
                       {t.contact.email}
                     </a>
                   </p>
                 </div>
-                <div className="glass-card p-6 hover:bg-white/10 transition-all duration-300 group">
-                  <Phone className="w-8 h-8 text-green-300 mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                  <p className="text-gray-300">
+                <div className="glass-card p-4 md:p-6 hover:bg-white/10 active:bg-white/10 transition-all duration-300 group touch-manipulation">
+                  <Phone className="w-6 h-6 md:w-8 md:h-8 text-green-300 mx-auto mb-3 md:mb-4 group-hover:scale-110 transition-transform" />
+                  <p className="text-gray-300 text-sm md:text-base">
                     <span className="text-green-200 font-medium block mb-2">Teléfono</span>
-                    <a href={`tel:${t.contact.phone}`} className="hover:text-green-300 transition-colors">
+                    <a 
+                      href={`https://wa.me/${t.contact.phone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="hover:text-green-300 transition-colors"
+                    >
                       {t.contact.phone}
                     </a>
                   </p>
                 </div>
-                <div className="glass-card p-6 hover:bg-white/10 transition-all duration-300 group">
-                  <MapPin className="w-8 h-8 text-purple-300 mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                  <p className="text-gray-300">
+                <div className="glass-card p-4 md:p-6 hover:bg-white/10 active:bg-white/10 transition-all duration-300 group touch-manipulation">
+                  <MapPin className="w-6 h-6 md:w-8 md:h-8 text-purple-300 mx-auto mb-3 md:mb-4 group-hover:scale-110 transition-transform" />
+                  <p className="text-gray-300 text-sm md:text-base">
                     <span className="text-purple-200 font-medium block mb-2">Ubicación</span>
                     {t.contact.location}
                   </p>
@@ -1898,6 +2026,147 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Modal de Imágenes Ampliadas */}
+      {imageModal.isOpen && imageModal.type && imageModal.index !== null && (() => {
+        const items = imageModal.type === 'experience' ? t.experience.jobs : t.projects.items
+        const item = items[imageModal.index]
+        
+        if (!item.images) return null
+
+        // Obtener todas las imágenes en secuencia (todas las categorías)
+        const allImages: { category: string; image: string; categoryIndex: number; imageIndex: number }[] = []
+        item.images.forEach((category: { category: string; images: string[] }, catIndex: number) => {
+          category.images.forEach((image: string, imgIndex: number) => {
+            allImages.push({
+              category: category.category,
+              image: image,
+              categoryIndex: catIndex,
+              imageIndex: imgIndex
+            })
+          })
+        })
+
+        // Encontrar el índice actual en la lista completa
+        const currentGlobalIndex = allImages.findIndex(
+          img => img.categoryIndex === imageModal.categoryIndex && img.imageIndex === imageModal.imageIndex
+        )
+        const initialIndex = currentGlobalIndex >= 0 ? currentGlobalIndex : 0
+        
+        return <ImageModalContent 
+          allImages={allImages}
+          initialIndex={initialIndex}
+          onClose={() => setImageModal({ isOpen: false, type: null, index: null, categoryIndex: 0, imageIndex: 0 })}
+        />
+      })()}
+    </div>
+  )
+}
+
+// Componente separado para el contenido del modal
+function ImageModalContent({ 
+  allImages, 
+  initialIndex, 
+  onClose 
+}: { 
+  allImages: { category: string; image: string; categoryIndex: number; imageIndex: number }[]
+  initialIndex: number
+  onClose: () => void 
+}) {
+  const [currentIndex, setCurrentIndex] = React.useState(initialIndex)
+  const currentImage = allImages[currentIndex]
+
+  // Actualizar índice cuando cambia initialIndex
+  React.useEffect(() => {
+    setCurrentIndex(initialIndex)
+  }, [initialIndex])
+
+  const goToPrevious = React.useCallback(() => {
+    setCurrentIndex(prev => prev > 0 ? prev - 1 : allImages.length - 1)
+  }, [allImages.length])
+
+  const goToNext = React.useCallback(() => {
+    setCurrentIndex(prev => prev < allImages.length - 1 ? prev + 1 : 0)
+  }, [allImages.length])
+
+  // Manejar teclado
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevious()
+      } else if (e.key === 'ArrowRight') {
+        goToNext()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [goToPrevious, goToNext, onClose])
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Botón cerrar */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 md:top-6 md:right-6 p-3 md:p-4 bg-black/70 hover:bg-black/90 rounded-full text-white transition-all duration-300 z-50 touch-manipulation"
+        aria-label="Cerrar"
+      >
+        <X className="w-6 h-6 md:w-8 md:h-8" />
+      </button>
+
+      {/* Contenedor de imagen */}
+      <div 
+        className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Botón anterior */}
+        {allImages.length > 1 && (
+          <button
+            onClick={goToPrevious}
+            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 p-3 md:p-4 bg-black/70 hover:bg-black/90 active:bg-black/95 rounded-full text-white transition-all duration-300 z-40 touch-manipulation"
+            aria-label="Imagen anterior"
+          >
+            <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
+          </button>
+        )}
+
+        {/* Imagen */}
+        <div className="relative w-full h-full max-w-[95vw] max-h-[95vh] flex items-center justify-center">
+          <img
+            key={currentIndex}
+            src={encodeURI(currentImage.image)}
+            alt={`${currentImage.category} - ${currentImage.imageIndex + 1}`}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl modal-image fade-in"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+            }}
+          />
+        </div>
+
+        {/* Botón siguiente */}
+        {allImages.length > 1 && (
+          <button
+            onClick={goToNext}
+            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 p-3 md:p-4 bg-black/70 hover:bg-black/90 active:bg-black/95 rounded-full text-white transition-all duration-300 z-40 touch-manipulation"
+            aria-label="Imagen siguiente"
+          >
+            <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
+          </button>
+        )}
+
+        {/* Información de la imagen */}
+        <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-lg px-4 md:px-6 py-2 md:py-3 text-white text-center z-40">
+          <p className="text-sm md:text-base font-medium">{currentImage.category}</p>
+          <p className="text-xs md:text-sm text-gray-300 mt-1">
+            {currentIndex + 1} / {allImages.length}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
