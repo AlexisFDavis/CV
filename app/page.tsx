@@ -3,6 +3,15 @@
 import { useState, useEffect, useRef } from 'react'
 import React from 'react'
 import { Download, Star, Code, Briefcase, User, Mail, Phone, MapPin, SquareChartGantt, ChevronDown, ChevronUp, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FaLinkedin, FaWhatsapp } from 'react-icons/fa'
+import { 
+  SiReact, SiNextdotjs, SiTypescript, SiAngular, SiNodedotjs, SiPostgresql, 
+  SiAmazon, SiGo, SiSharp, SiMongodb, SiGraphql, SiTailwindcss,
+  SiFastify, SiVite, SiDocker, SiGit, SiVercel, SiMysql,
+  SiPython, SiTerraform, SiChartdotjs, SiOpenai, SiGooglemaps, SiGoogle,
+  SiSpring, SiAnthropic
+} from 'react-icons/si'
+import { FaJava, FaAws } from 'react-icons/fa'
 
 interface Language {
   hero: {
@@ -134,7 +143,7 @@ const translations: { [key: string]: Language } = {
           name: "Analytics IA",
           description: "Plataforma de análisis para e-commerce que convierte consultas en lenguaje natural a queries GraphQL o MongoDB, ejecutándolas automáticamente y presentando resultados con gráficos interactivos.",
           extendedDescription: "Plataforma de análisis para e-commerce que convierte consultas en lenguaje natural a queries GraphQL o MongoDB, ejecutándolas automáticamente y presentando resultados con gráficos interactivos. Utiliza inteligencia artificial (Groq, Ollama, OpenAI o Claude) para interpretar preguntas en español, detectar visualizaciones gráficas necesarias, y generar consultas apropiadas.\n\nBackend con Fastify y GraphQL (Mercurius), con fallback a MongoDB directo cuando GraphQL no es suficiente. Frontend en React con Vite, shadcn/ui y Recharts. Maneja seis colecciones: usuarios, productos, reseñas, órdenes, envíos y analytics, permitiendo filtrar, ordenar y buscar usando lenguaje natural.\n\nDetecta automáticamente cuando se necesitan gráficos (barras, líneas, torta) y genera visualizaciones comparativas en cuadrícula. El flujo es simple: usuario escribe en español, sistema procesa con IA, ejecuta query en MongoDB, y presenta resultados con gráficos interactivos. Arquitectura modular y extensible, soporta múltiples proveedores de IA mediante variables de entorno, accesible para usuarios técnicos y no técnicos.\n\nCasos de Uso:\n\nAnálisis de Productos: Consultar productos por categoría, precio o stock. Ejemplo: \"Productos de electrónica ordenados por los más valiosos\" genera un gráfico comparativo automático.\n\nAnálisis de Ventas: Visualizar órdenes recientes en gráficos de barras o líneas. Ejemplo: \"Muéstrame las órdenes en un gráfico de líneas por fecha\" agrupa y visualiza tendencias temporales.\n\nAnálisis de Ratings: Identificar productos mejor valorados y distribuir ratings. Ejemplo: \"Productos más valorados de electrónica\" calcula promedios y ordena por rating automáticamente.",
-          technologies: ["React", "Vite", "Fastify", "GraphQL", "MongoDB", "Groq", "Ollama", "OpenAI", "Claude", "shadcn/ui", "Recharts", "TypeScript"],
+          technologies: ["React", "Vite", "Fastify", "GraphQL", "MongoDB", "Groq", "Ollama", "shadcn/ui", "Recharts", "TypeScript"],
           images: [
             {
               category: "Analytics",
@@ -187,7 +196,7 @@ const translations: { [key: string]: Language } = {
       name: "Alexis Davis",
       title: "Software Developer",
       description: "Full Stack Developer passionate about creating innovative solutions",
-      technologies: "C# • PostgreSQL • Angular • Next.js • AWS • Java • Go",
+      technologies: "C# • PostgreSQL • Angular • Next.js • AWS • Java • Go • NodeJS",
       imageUrl: "/FotoMia.jpg"
     },
     about: {
@@ -304,7 +313,79 @@ const translations: { [key: string]: Language } = {
   }
 }
 
+// Función para obtener icono y color de tecnología
+function getTechIcon(techName: string): { icon: React.ReactNode; color: string } {
+  const tech = techName.toLowerCase().trim()
+  const iconSize = 20
+  
+  // Mapeo de tecnologías a iconos y colores
+  const techMap: Record<string, { icon: React.ReactNode; color: string }> = {
+    'react': { icon: <SiReact size={iconSize} />, color: '#61DAFB' },
+    'next.js': { icon: <SiNextdotjs size={iconSize} />, color: '#000000' },
+    'nextjs': { icon: <SiNextdotjs size={iconSize} />, color: '#000000' },
+    'typescript': { icon: <SiTypescript size={iconSize} />, color: '#3178C6' },
+    'angular': { icon: <SiAngular size={iconSize} />, color: '#DD0031' },
+    'node.js': { icon: <SiNodedotjs size={iconSize} />, color: '#339933' },
+    'nodejs': { icon: <SiNodedotjs size={iconSize} />, color: '#339933' },
+    'node': { icon: <SiNodedotjs size={iconSize} />, color: '#339933' },
+    'postgresql': { icon: <SiPostgresql size={iconSize} />, color: '#4169E1' },
+    'aws': { icon: <FaAws size={iconSize} />, color: '#FF9900' },
+    'java': { icon: <FaJava size={iconSize} />, color: '#ED8B00' },
+    'go': { icon: <SiGo size={iconSize} />, color: '#00ADD8' },
+    'c#': { icon: <SiSharp size={iconSize} />, color: '#239120' },
+    '.net core': { icon: <SiSharp size={iconSize} />, color: '#239120' },
+    'mongodb': { icon: <SiMongodb size={iconSize} />, color: '#47A248' },
+    'graphql': { icon: <SiGraphql size={iconSize} />, color: '#E10098' },
+    'tailwind css': { icon: <SiTailwindcss size={iconSize} />, color: '#06B6D4' },
+    'tailwindcss': { icon: <SiTailwindcss size={iconSize} />, color: '#06B6D4' },
+    'fastify': { icon: <SiFastify size={iconSize} />, color: '#000000' },
+    'vite': { icon: <SiVite size={iconSize} />, color: '#646CFF' },
+    'docker': { icon: <SiDocker size={iconSize} />, color: '#2496ED' },
+    'git': { icon: <SiGit size={iconSize} />, color: '#F05032' },
+    'vercel': { icon: <SiVercel size={iconSize} />, color: '#000000' },
+    'mysql': { icon: <SiMysql size={iconSize} />, color: '#4479A1' },
+    'sql server': { icon: <Code size={iconSize} />, color: '#CC2927' },
+    'microsoft sql server': { icon: <Code size={iconSize} />, color: '#CC2927' },
+    'python': { icon: <SiPython size={iconSize} />, color: '#3776AB' },
+    'terraform': { icon: <SiTerraform size={iconSize} />, color: '#7B42BC' },
+    'chart.js': { icon: <SiChartdotjs size={iconSize} />, color: '#FF6384' },
+    'chartjs': { icon: <SiChartdotjs size={iconSize} />, color: '#FF6384' },
+    'openai': { icon: <SiOpenai size={iconSize} />, color: '#412991' },
+    'google maps api': { icon: <SiGooglemaps size={iconSize} />, color: '#4285F4' },
+    'google places api': { icon: <SiGooglemaps size={iconSize} />, color: '#4285F4' },
+    'google gemini ai': { icon: <SiGoogle size={iconSize} />, color: '#4285F4' },
+    'google': { icon: <SiGoogle size={iconSize} />, color: '#4285F4' },
+    'groq': { icon: <Code size={iconSize} />, color: '#FF6B6B' },
+    'ollama': { icon: <Code size={iconSize} />, color: '#4ECDC4' },
+    'claude': { icon: <SiAnthropic size={iconSize} />, color: '#D97706' },
+    'springboot': { icon: <SiSpring size={iconSize} />, color: '#6DB33F' },
+    'java - springboot': { icon: <SiSpring size={iconSize} />, color: '#6DB33F' },
+    'spring': { icon: <SiSpring size={iconSize} />, color: '#6DB33F' },
+    'shadcn/ui': { icon: <Code size={iconSize} />, color: '#000000' },
+    'shadcn': { icon: <Code size={iconSize} />, color: '#000000' },
+    'recharts': { icon: <Code size={iconSize} />, color: '#8884D8' },
+  }
+  
+  // Buscar coincidencia exacta
+  if (techMap[tech]) {
+    return techMap[tech]
+  }
+  
+  // Buscar coincidencia parcial
+  const match = Object.keys(techMap).find(key => tech.includes(key) || key.includes(tech))
+  
+  if (match) {
+    return techMap[match]
+  }
+  
+  // Retornar un icono por defecto si no se encuentra
+  return { icon: <Code size={iconSize} />, color: '#9CA3AF' }
+}
+
 export default function Home() {
+  // URLs de redes sociales
+  const linkedinUrl = 'https://www.linkedin.com/in/alexis-federico-davis/'
+  
   const [currentLanguage, setCurrentLanguage] = useState<'es' | 'en'>('es')
   const [visibleSections, setVisibleSections] = useState<string[]>([])
   const [activeSection, setActiveSection] = useState<string>('hero')
@@ -950,8 +1031,8 @@ export default function Home() {
         
         .cursor-dot {
           position: fixed;
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           border-radius: 50%;
           background: 
             radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 30%, transparent 60%);
@@ -959,7 +1040,7 @@ export default function Home() {
           -webkit-backdrop-filter: blur(0.5px) brightness(1.15) contrast(1.05);
           pointer-events: none;
           z-index: 9999;
-          transform: translate(-50%, -50%) scale(1.3);
+          transform: translate(-50%, -50%) scale(1.2);
           transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1);
           box-shadow: 
             inset 0 0 20px rgba(255, 255, 255, 0.2),
@@ -1193,15 +1274,185 @@ export default function Home() {
         />
       </div>
 
-      <div className="fixed top-4 right-4 md:top-6 md:right-6 z-50">
+      <div className="fixed top-4 right-4 md:top-6 md:right-6 z-50 flex flex-col gap-3">
         <button
           onClick={toggleLanguage}
-          className="glass-card-enhanced px-4 py-2 md:px-6 md:py-3 text-white font-medium hover:scale-105 active:scale-95 transition-all duration-300 group text-sm md:text-base touch-manipulation"
+          className="relative px-4 py-2 md:px-6 md:py-3 text-white font-medium hover:scale-110 active:scale-95 transition-all duration-300 group text-sm md:text-base touch-manipulation rounded-lg overflow-hidden"
+          style={{
+            background: 'radial-gradient(circle at 30% 30%, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.15) 30%, rgba(139, 92, 246, 0.05) 60%, transparent 100%)',
+            backdropFilter: 'blur(0.5px) brightness(1.15) contrast(1.05)',
+            WebkitBackdropFilter: 'blur(0.5px) brightness(1.15) contrast(1.05)',
+            boxShadow: `
+              inset 0 0 15px rgba(255, 255, 255, 0.2),
+              inset 0 2px 6px rgba(255, 255, 255, 0.25),
+              inset -1px -1px 4px rgba(0, 0, 0, 0.1),
+              0 0 15px rgba(139, 92, 246, 0.4),
+              0 0 30px rgba(139, 92, 246, 0.2)
+            `,
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+          }}
         >
-          <span className="group-hover:text-purple-300 transition-colors">
+          {/* Efecto de brillo superior (simulando reflejo de gota) */}
+          <div 
+            className="absolute top-[20%] left-[20%] w-[20%] h-[20%] rounded-full pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)',
+              filter: 'blur(1px)',
+              boxShadow: '0 0 6px rgba(255, 255, 255, 0.4)',
+            }}
+          />
+          {/* Punto de luz más pequeño */}
+          <div 
+            className="absolute top-[12%] left-[12%] w-[12%] h-[12%] rounded-full pointer-events-none"
+            style={{
+              background: 'rgba(255, 255, 255, 0.7)',
+              filter: 'blur(0.3px)',
+              boxShadow: '0 0 3px rgba(255, 255, 255, 0.6)',
+            }}
+          />
+          <span className="relative z-10 group-hover:text-purple-300 transition-colors">
             {currentLanguage === 'es' ? '🇺🇸 EN' : '🇦🇷 ES'}
           </span>
         </button>
+        
+        {/* Iconos de LinkedIn y WhatsApp con efecto de gotitas conectadas */}
+        <div className="relative flex gap-2 justify-center items-center">
+          {/* Conexión entre gotas */}
+          <div 
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1 md:w-10 md:h-1.5 rounded-full pointer-events-none z-0"
+            style={{
+              background: 'linear-gradient(to right, rgba(0, 119, 181, 0.4) 0%, rgba(0, 119, 181, 0.2) 30%, rgba(37, 211, 102, 0.2) 70%, rgba(37, 211, 102, 0.4) 100%)',
+              filter: 'blur(2px)',
+              animation: 'water-merge-flow 3s ease-in-out infinite',
+            }}
+          />
+          
+          <a
+            href={linkedinUrl} 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group touch-manipulation z-10 overflow-hidden"
+            style={{
+              background: 'radial-gradient(circle at 30% 30%, rgba(0, 119, 181, 0.25) 0%, rgba(0, 119, 181, 0.15) 30%, rgba(0, 119, 181, 0.05) 60%, transparent 100%)',
+              backdropFilter: 'blur(0.5px) brightness(1.15) contrast(1.05)',
+              WebkitBackdropFilter: 'blur(0.5px) brightness(1.15) contrast(1.05)',
+              boxShadow: `
+                inset 0 0 15px rgba(255, 255, 255, 0.2),
+                inset 0 2px 6px rgba(255, 255, 255, 0.25),
+                inset -1px -1px 4px rgba(0, 0, 0, 0.1),
+                0 0 15px rgba(0, 119, 181, 0.4),
+                0 0 30px rgba(0, 119, 181, 0.2)
+              `,
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+            }}
+          >
+            {/* Efecto de brillo superior (simulando reflejo de gota) */}
+            <div 
+              className="absolute top-[20%] left-[20%] w-[20%] h-[20%] rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)',
+                filter: 'blur(1px)',
+                boxShadow: '0 0 6px rgba(255, 255, 255, 0.4)',
+              }}
+            />
+            {/* Punto de luz más pequeño */}
+            <div 
+              className="absolute top-[12%] left-[12%] w-[12%] h-[12%] rounded-full pointer-events-none"
+              style={{
+                background: 'rgba(255, 255, 255, 0.7)',
+                filter: 'blur(0.3px)',
+                boxShadow: '0 0 3px rgba(255, 255, 255, 0.6)',
+              }}
+            />
+            <FaLinkedin 
+              className="relative z-10 w-6 h-6 md:w-7 md:h-7 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
+              style={{ 
+                color: '#0077B5',
+                opacity: 0.6,
+                filter: 'drop-shadow(0 0 0px transparent)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '1'
+                e.currentTarget.style.filter = 'drop-shadow(0 0 8px #0077B5) drop-shadow(0 0 12px rgba(0, 119, 181, 0.8))'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '0.6'
+                e.currentTarget.style.filter = 'drop-shadow(0 0 0px transparent)'
+              }}
+            />
+            {/* Brillo centrado animado */}
+            <div 
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle at center, rgba(0, 119, 181, 0.5) 0%, rgba(0, 119, 181, 0.3) 30%, transparent 60%)',
+                animation: 'water-drip 2.5s ease-in-out infinite',
+              }}
+            />
+          </a>
+          
+          <a
+            href={`https://wa.me/${t.contact.phone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group touch-manipulation z-10 overflow-hidden"
+            style={{
+              background: 'radial-gradient(circle at 30% 30%, rgba(37, 211, 102, 0.25) 0%, rgba(37, 211, 102, 0.15) 30%, rgba(37, 211, 102, 0.05) 60%, transparent 100%)',
+              backdropFilter: 'blur(0.5px) brightness(1.15) contrast(1.05)',
+              WebkitBackdropFilter: 'blur(0.5px) brightness(1.15) contrast(1.05)',
+              boxShadow: `
+                inset 0 0 15px rgba(255, 255, 255, 0.2),
+                inset 0 2px 6px rgba(255, 255, 255, 0.25),
+                inset -1px -1px 4px rgba(0, 0, 0, 0.1),
+                0 0 15px rgba(37, 211, 102, 0.4),
+                0 0 30px rgba(37, 211, 102, 0.2)
+              `,
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+            }}
+          >
+            {/* Efecto de brillo superior (simulando reflejo de gota) */}
+            <div 
+              className="absolute top-[20%] left-[20%] w-[20%] h-[20%] rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)',
+                filter: 'blur(1px)',
+                boxShadow: '0 0 6px rgba(255, 255, 255, 0.4)',
+              }}
+            />
+            {/* Punto de luz más pequeño */}
+            <div 
+              className="absolute top-[12%] left-[12%] w-[12%] h-[12%] rounded-full pointer-events-none"
+              style={{
+                background: 'rgba(255, 255, 255, 0.7)',
+                filter: 'blur(0.3px)',
+                boxShadow: '0 0 3px rgba(255, 255, 255, 0.6)',
+              }}
+            />
+            <FaWhatsapp 
+              className="relative z-10 w-6 h-6 md:w-7 md:h-7 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
+              style={{ 
+                color: '#25D366',
+                opacity: 0.6,
+                filter: 'drop-shadow(0 0 0px transparent)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '1'
+                e.currentTarget.style.filter = 'drop-shadow(0 0 8px #25D366) drop-shadow(0 0 12px rgba(37, 211, 102, 0.8))'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '0.6'
+                e.currentTarget.style.filter = 'drop-shadow(0 0 0px transparent)'
+              }}
+            />
+            {/* Brillo centrado animado */}
+            <div 
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle at center, rgba(37, 211, 102, 0.5) 0%, rgba(37, 211, 102, 0.3) 30%, transparent 60%)',
+                animation: 'water-drip 2.5s ease-in-out infinite 0.5s',
+              }}
+            />
+          </a>
+        </div>
       </div>
 
       <div className="fixed right-4 md:right-8 top-1/2 transform -translate-y-1/2 z-40 hidden md:block">
@@ -1290,11 +1541,11 @@ export default function Home() {
           visibleSections.includes('hero') ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-20 scale-95'
         }`}
       >
-        <div className="glass-card-hero text-center max-w-4xl mx-auto p-6 md:p-12 relative">
+        <div className="glass-card-hero text-center max-w-4xl mx-auto p-6 md:p-12 pt-8 md:pt-12 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-blue-500/5 animate-gradient-shift"></div>
           <div className="relative z-10">
-            <div className="mb-6 md:mb-8 inline-block">
-              <div className="w-32 h-32 md:w-64 md:h-64 mx-auto mb-4 md:mb-6 relative">
+            <div className="mb-2 md:mb-3 inline-block">
+              <div className="w-32 h-32 md:w-64 md:h-64 mx-auto mb-0 relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse"></div>
                 <div className="absolute inset-3 bg-gray-900 rounded-full flex items-center justify-center">
                   <img
@@ -1304,25 +1555,52 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 mb-3 md:mb-4 animate-fade-in-up leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 mb-1 md:mb-2 animate-fade-in-up leading-tight">
               {t.hero.name}
             </h1>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-blue-200 mb-4 md:mb-6 animate-fade-in-up-delay font-light">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-blue-200 mb-2 md:mb-3 animate-fade-in-up-delay font-light">
               {t.hero.title}
             </h2>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 mb-4 md:mb-6 animate-fade-in-up-delay-2 max-w-2xl mx-auto px-4">
               {t.hero.description}
             </p>
             <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-6 md:mt-8 px-4">
-              {t.hero.technologies.split(' • ').map((tech, index) => (
-                <span 
-                  key={index}
-                  className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 rounded-full text-xs md:text-sm font-medium border border-purple-400/20 backdrop-blur-sm hover:scale-105 active:scale-95 transition-transform duration-300"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  {tech}
-                </span>
-              ))}
+              {t.hero.technologies.split(' • ').map((tech, index) => {
+                const { icon, color } = getTechIcon(tech)
+                return (
+                  <span 
+                    key={index}
+                    className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs md:text-sm font-medium border border-purple-400/20 backdrop-blur-sm hover:scale-110 active:scale-95 transition-all duration-300 flex items-center gap-2 group hover:border-purple-400/50 hover:bg-gradient-to-r hover:from-purple-500/30 hover:to-pink-500/30"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                    onMouseEnter={(e) => {
+                      const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                      if (iconElement) {
+                        iconElement.style.opacity = '1'
+                        iconElement.style.filter = `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 12px ${color}80)`
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                      if (iconElement) {
+                        iconElement.style.opacity = '0.5'
+                        iconElement.style.filter = 'drop-shadow(0 0 0px transparent)'
+                      }
+                    }}
+                  >
+                    <span 
+                      className="transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
+                      style={{ 
+                        color: color,
+                        opacity: 0.5,
+                        filter: 'drop-shadow(0 0 0px transparent)',
+                      }}
+                    >
+                      {icon}
+                    </span>
+                    <span className="text-purple-200 group-hover:text-white group-hover:font-semibold transition-all duration-300">{tech}</span>
+                  </span>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -1457,8 +1735,42 @@ export default function Home() {
                             )}
                           </div>
                           
-                    <div className="text-purple-300 text-xs md:text-sm font-medium">
-                      {job.technologies}
+                    <div className="flex flex-wrap gap-2 md:gap-3 mt-3">
+                      {job.technologies.split(' • ').map((tech, techIndex) => {
+                        const { icon, color } = getTechIcon(tech)
+                        return (
+                          <span 
+                            key={techIndex}
+                            className="px-2 py-1 md:px-3 md:py-1.5 bg-white/5 rounded-lg text-xs md:text-sm font-medium border border-white/10 backdrop-blur-sm hover:scale-110 active:scale-95 transition-all duration-300 flex items-center gap-1.5 group hover:bg-white/15 hover:border-white/30"
+                            onMouseEnter={(e) => {
+                              const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                              if (iconElement) {
+                                iconElement.style.opacity = '1'
+                                iconElement.style.filter = `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 12px ${color}80)`
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                              if (iconElement) {
+                                iconElement.style.opacity = '0.5'
+                                iconElement.style.filter = 'drop-shadow(0 0 0px transparent)'
+                              }
+                            }}
+                          >
+                            <span 
+                              className="transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
+                              style={{ 
+                                color: color,
+                                opacity: 0.5,
+                                filter: 'drop-shadow(0 0 0px transparent)',
+                              }}
+                            >
+                              {icon}
+                            </span>
+                            <span className="text-purple-300 group-hover:text-white group-hover:font-semibold transition-all duration-300">{tech}</span>
+                          </span>
+                        )
+                      })}
                     </div>
                   </div>
                         {(hasExtendedDescription || hasImages) && (
@@ -1732,14 +2044,41 @@ export default function Home() {
                         </div>
                         
                   <div className="flex flex-wrap gap-2">
-                    {project.technologies.map((tech, techIndex) => (
-                      <span 
-                        key={techIndex}
-                        className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-200 rounded-full text-sm font-medium border border-blue-400/20 hover:scale-110 transition-transform duration-200"
-                      >
-                        {tech}
-                      </span>
-                    ))}
+                    {project.technologies.map((tech, techIndex) => {
+                      const { icon, color } = getTechIcon(tech)
+                      return (
+                        <span 
+                          key={techIndex}
+                          className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full text-sm font-medium border border-blue-400/20 hover:scale-110 transition-all duration-200 flex items-center gap-2 group hover:border-blue-400/50 hover:bg-gradient-to-r hover:from-blue-500/30 hover:to-purple-500/30"
+                          onMouseEnter={(e) => {
+                            const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                            if (iconElement) {
+                              iconElement.style.opacity = '1'
+                              iconElement.style.filter = `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 12px ${color}80)`
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                            if (iconElement) {
+                              iconElement.style.opacity = '0.5'
+                              iconElement.style.filter = 'drop-shadow(0 0 0px transparent)'
+                            }
+                          }}
+                        >
+                          <span 
+                            className="transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
+                            style={{ 
+                              color: color,
+                              opacity: 0.5,
+                              filter: 'drop-shadow(0 0 0px transparent)',
+                            }}
+                          >
+                            {icon}
+                          </span>
+                          <span className="text-blue-200 group-hover:text-white group-hover:font-semibold transition-all duration-300">{tech}</span>
+                        </span>
+                      )
+                    })}
                   </div>
                 </div>
                       {(hasExtendedDescription || hasImages) && (
@@ -1956,14 +2295,41 @@ export default function Home() {
                   {category.name}
                 </h3>
                 <div className="space-y-2 md:space-y-3">
-                  {category.items.map((skill, skillIndex) => (
-                    <div 
-                      key={skillIndex}
-                      className="bg-gradient-to-r from-white/10 to-white/5 text-center py-2 px-3 md:py-3 md:px-4 rounded-lg text-sm md:text-base text-gray-200 hover:from-purple-500/20 hover:to-pink-500/20 hover:text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer border border-white/10 hover:border-purple-400/30 touch-manipulation"
-                    >
-                      {skill}
-                    </div>
-                  ))}
+                  {category.items.map((skill, skillIndex) => {
+                    const { icon, color } = getTechIcon(skill)
+                    return (
+                      <div 
+                        key={skillIndex}
+                        className="bg-gradient-to-r from-white/10 to-white/5 text-center py-2 px-3 md:py-3 md:px-4 rounded-lg text-sm md:text-base text-gray-200 hover:from-purple-500/20 hover:to-pink-500/20 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer border border-white/10 hover:border-purple-400/50 touch-manipulation flex items-center justify-center gap-2 group hover:bg-gradient-to-r hover:from-white/20 hover:to-white/10"
+                        onMouseEnter={(e) => {
+                          const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                          if (iconElement) {
+                            iconElement.style.opacity = '1'
+                            iconElement.style.filter = `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 12px ${color}80)`
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          const iconElement = e.currentTarget.querySelector('span:first-child') as HTMLElement
+                          if (iconElement) {
+                            iconElement.style.opacity = '0.5'
+                            iconElement.style.filter = 'drop-shadow(0 0 0px transparent)'
+                          }
+                        }}
+                      >
+                        <span 
+                          className="transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
+                          style={{ 
+                            color: color,
+                            opacity: 0.5,
+                            filter: 'drop-shadow(0 0 0px transparent)',
+                          }}
+                        >
+                          {icon}
+                        </span>
+                        <span className="group-hover:text-white group-hover:font-semibold transition-all duration-300">{skill}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ))}

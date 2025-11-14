@@ -1,0 +1,23 @@
+Hola, soy Alexis Davis, Desarrollador Full Stack apasionado por crear soluciones innovadoras que combinan tecnología de vanguardia con inteligencia artificial.
+
+Lo que ofrezco:
+
+Como desarrollador Full Stack con experiencia en desarrollo de aplicaciones web y móviles, me especializo en crear soluciones eficientes y escalables. Mi expertise abarca:
+
+Frontend: Desarrollo de interfaces modernas con React, Next.js, Angular y TypeScript. Diseño responsive con Tailwind CSS. Dashboards interactivos con visualizaciones en tiempo real. Optimización de performance y Core Web Vitals.
+
+Backend: APIs REST y GraphQL con Node.js, C#, Java y Go. Arquitectura serverless con AWS Lambda. Integración de servicios de terceros y microservicios. Sistemas de autenticación y autorización robustos.
+
+Inteligencia Artificial: Integración de IA generativa con OpenAI, Claude, Google Gemini, Groq y Ollama. Procesamiento de lenguaje natural. Sistemas de recomendación inteligente. Análisis de datos con IA para e-commerce y analytics.
+
+Infraestructura y DevOps: Cloud computing con AWS incluyendo Lambdas, CloudWatch y Terraform. Bases de datos relacionales y no relacionales como PostgreSQL, SQL Server, MongoDB y MySQL. CI/CD, Docker y despliegues en Vercel. Monitoreo, logging estructurado y alertas en tiempo real.
+
+He desarrollado plataformas completas como TravelMate, una plataforma de gestión colaborativa de viajes con inteligencia artificial, Analytics IA, un sistema de análisis de e-commerce con procesamiento de lenguaje natural, y sistemas empresariales de gestión inmobiliaria con dashboards financieros en tiempo real.
+
+Lo que busco:
+
+Un lugar donde pueda crecer profesionalmente, aplicar mis conocimientos y capacidades en proyectos desafiantes, y contribuir al éxito del equipo. Busco un entorno que valore la mejora continua, donde el aprendizaje constante y la innovación sean parte de la cultura. Un espacio de trabajo en equipo con colaboración efectiva, comunicación abierta y apoyo mutuo. Oportunidades para trabajar en proyectos impactantes que generen valor real, y un ambiente que fomente el desarrollo profesional con mentoring, desafíos técnicos y crecimiento en nuevas tecnologías.
+
+Estoy abierto a oportunidades donde pueda aportar mi experiencia en desarrollo Full Stack, inteligencia artificial y arquitectura cloud, mientras continúo aprendiendo y evolucionando como profesional.
+
+#FullStackDeveloper #SoftwareDeveloper #AI #WebDevelopment #CloudComputing #React #NextJS #TypeScript #AWS #NodeJS
